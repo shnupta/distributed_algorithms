@@ -7,7 +7,8 @@ defmodule Peer do
   def start(peer_id) do
     IO.puts "-> Peer at #{Helper.node_string()} with ID #{peer_id}"
     receive do
-      { :peer_list, peers } -> next(peer_id, peers, 0)
+      { :peers_list, peers } -> 
+        next(peer_id, peers, 0)
     end
   end
 

@@ -30,7 +30,7 @@ defp start(config, :cluster_start) do
 
 end # start/2
 
-def spawn_peers(config, peers_list, peers_left) do
+defp spawn_peers(config, peers_list, peers_left) do
   peer = Node.spawn(:'peer#{peers_left}_#{config.node_suffix}', Peer, :start, [peers_left])
   new_peers_list = [peer | peers_list]
   if peers_left == 0 do

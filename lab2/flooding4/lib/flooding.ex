@@ -36,7 +36,19 @@ defp start(config, :cluster_start) do
   IO.puts "Sending #{inspect(first_peer)} a hello"
   send first_peer, { :hello, -1, self() }
 
+  collect_children(0)
+
 end # start/2
+
+defp collect_children(child_count) do
+  receive do
+    { :child, count } -> collect_children(child_count + count)
+  after
+    1_000 ->
+      IO.puts "Root node children: #{child_count}"
+      collect_children(child_count)
+  end
+end
 
 defp spawn_peers(config, peers_list, peers_left) do
   peer = Node.spawn(:'peer#{peers_left}_#{config.node_suffix}', Peer, :start, [peers_left])

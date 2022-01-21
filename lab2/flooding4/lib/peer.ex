@@ -8,25 +8,27 @@ defmodule Peer do
     IO.puts "-> Peer at #{Helper.node_string()} with ID #{peer_id}"
     receive do
       { :peers_list, peers } -> 
-        next(peer_id, peers, 0, peer_id, 0)
+        next(peer_id, peers, 0, nil, peer_id, 0)
     end
   end
 
-  defp next(peer_id, peers, hello_count, parent_id, child_count) do
+  defp next(peer_id, peers, hello_count, parent, parent_id, child_count) do
     receive do
       { :hello, from_id, from } -> 
         if hello_count == 0 do
+          send from, { :child, 1 } # Tell your parent you are a child
           forward(peers, peer_id)
-          send from, { :child } 
-          next(peer_id, peers, hello_count+1, from_id, child_count)
+          next(peer_id, peers, hello_count+1, from, from_id, child_count)
         else
-          next(peer_id, peers, hello_count+1, parent_id, child_count)   
+          next(peer_id, peers, hello_count+1, parent, parent_id, child_count)   
         end
-      { :child } -> next(peer_id, peers, hello_count, parent_id, child_count+1)
+      { :child, count } -> 
+        send parent, { :child, count } # Pass your children's counts to your parent
+        next(peer_id, peers, hello_count, parent, parent_id, child_count+count)
     after
       1_000 -> 
         IO.puts "-> Peer #{peer_id} PID #{inspect(self())} Parent #{parent_id} Messages seen = #{hello_count} Children = #{child_count}"
-        next(peer_id, peers, hello_count, parent_id, child_count)
+        next(peer_id, peers, hello_count, parent, parent_id, child_count)
     end
   end
 
